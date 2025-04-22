@@ -73,14 +73,19 @@ customElements.define("tag-methodname", class extends TagLabelClass {
             this.colors = "green,beige";
         } else if (isTrigger) {
             if (isAfter) {
-                RAFLATE.style.display = "block";
-                RAFEARLY.style.display = "none";
                 this.colors = "orangered,beige";
             } else {
-                RAFLATE.style.display = "none";
-                RAFEARLY.style.display = "block";
                 this.colors = "gold";
             }
+            setTimeout(() => {
+                if (this.colors == "gold") {
+                    RAFLATE.style.display = "none";
+                    RAFEARLY.style.display = "block";
+                } else {
+                    RAFLATE.style.display = "block";
+                    RAFEARLY.style.display = "none";
+                }
+            }, 100); // WTF? wsn't applied correctly
         }
     }
 });
