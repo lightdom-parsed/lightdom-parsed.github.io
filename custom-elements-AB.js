@@ -1,3 +1,7 @@
+/* 
+    DISCLAIMER this a a sneak preview of one lesson from the Web Components course I am working on
+    I cut some corners to get it only after a BlueSky conversation
+*/
 
 // **************************************************************************** urlParams
 const urlParams = new URLSearchParams(window.location.search);
