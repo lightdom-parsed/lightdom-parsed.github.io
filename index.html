@@ -4,6 +4,7 @@
     DISCLAIMER this a a sneak preview of one lesson from the Web Components course I am working on
     I cut some corners to get it only after a BlueSky conversation
   -->
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -100,23 +101,27 @@
     <main>
         <section id="intro">
             <p><i>This is a Sneak Preview of one lesson of a Web Components course I am workin on. To be announced on <a
-                        href="https://bsky.app/profile/engelman.nl">my BlueSky page</a></i></p>
+                        href="https://bsky.app/profile/engelman.nl">my BlueSky page</a></i>
+            </p>
+            level: advanced
             <p>
                 Long read background:
                 <a href="https://dev.to/dannyengelman/web-component-developers-do-not-connect-with-the-connectedcallback-yet-4jo7">
                     DEV.to post: Web Component Developers do not connect with the connectedCallback yet
                 </a>
-                </p>
-                <p>
+            </p>
+            <p>
                 Exploring when setTimeout, requestAnimationFrame and promises execute
                 <br>With <span style="background:var(--componentA)"> Component A </span> <i>defined AFTER DOM is
                     parsed</i> - script load with "defer" or as Module (execute after DOM was parsed)
-                <br>and <span style="background:var(--componentB)"> Component B </span> <i>defined BEFORE DOM is parsed</i> - script executed renderblocking in the &lt;head&gt;
+                <br>and <span style="background:var(--componentB)"> Component B </span> <i>defined BEFORE DOM is
+                    parsed</i> - script executed renderblocking in the &lt;head&gt;
             </p>
             <p>
                 First explorations: Note <b>when</b> rAF - requestAnimationFrame runs, hit F5 multiple times and watch:
                 <br>
-                <span id="RAFLATE">at the bottom of the page how <span style="background:orangered;color:beige">&nbsp;rAF_riggered after setTimeout&nbsp;</span></span>
+                <span id="RAFLATE">at the bottom of the page how <span style="background:orangered;color:beige">&nbsp;rAF_riggered after
+                        setTimeout&nbsp;</span></span>
                 <span id="RAFEARLY"> rAF - requestAnimation ran early, thats great. Reload the page again with F5</span>
             </p>
             <p>setTimeout does the same as rAF, but always runs <b>before</b> the next attributeChangedCallback</p>
