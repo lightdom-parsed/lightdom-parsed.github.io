@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LightDOM Parsed</title>
+    <script src="HTMLParsedElement.js"></script>
+    <script src="custom-elements-AB.js"></script>
+    <script src="tags-display.js"></script>
+    <script src="https://web-components-banner.github.io/element.min.js"></script>
+    <style>
+        body {
+            background: beige;
+            --h1background: goldenrod;
+            --attrhighlight: darkred;
+            --componentA: powderblue;
+            --componentB: khaki;
+            --methodnamebackground: red;
+            --warningcolor: crimson;
+            font: 12px arial;
+            --explanationFontSize: 14px;
+            --width: 1200px;
+            --columnwidth: calc(var(--width) / 2 - -40px);
+            max-width: var(--width);
+            margin: 0 auto;
+        }
+
+        main {
+            padding: 0 2em;
+        }
+
+        h3 {
+            background: var(--h3background);
+            margin: 0;
+            text-align: center;
+        }
+
+        .DOMevent {
+            background: var(--h1background);
+            text-align: center;
+        }
+
+        details {
+            width: 50%;
+        }
+
+        .componentA,
+        .componentB {
+            /* width: var(--columnwidth); */
+            background: var(--componentA);
+            border-bottom: 1px solid grey;
+        }
+
+        .componentA {
+            text-align: left;
+            padding-left: 1em;
+        }
+
+        .componentB {
+            background: var(--componentB);
+            margin-left: calc(100% - var(--columnwidth));
+        }
+
+        summary {
+            display: grid;
+            grid-template-columns: 30px 1fr 1fr 1fr;
+        }
+
+        #intro {
+            font-size: 150%;
+            margin-bottom: 1em;
+        }
+
+        *::part(explanation) {
+            display: block;
+            font-size: 100%;
+            padding-left: 30px;
+        }
+    </style>
+    <script>
+        // ====================================================================
+        document.addEventListener("DOMContentLoaded", () => {
+            document.body.append(createElement("h3", {
+                innerHTML: "event: DOMContentLoaded",
+                className: "DOMevent"
+            }));
+        });
+    </script>
+</head>
+
+<body>
+    <header>
+        <web-components-banner text3="When is lightDOM parsed?" text4="sneak preview"></web-components-banner>
+    </header>
+    <custom-parsed-element></custom-parsed-element>
+    <main>
+        <section id="intro">
+            <p>
+                Exploring when setTimeout, requestAnimationFrame and promises execute
+                <br>With <span style="background:var(--componentA)"> Component A </span> <i>defined AFTER DOM is
+                    parsed</i> - script load with "defer" or as Module (execute after DOM was parsed)
+                <br>and <span style="background:var(--componentB)"> Component B </span> <i>defined BEFORE DOM is parsed</i> - script executed renderblocking in the &lt;head&gt;
+            </p>
+            <p>
+                First explorations: Note <b>when</b> rAF - requestAnimationFrame runs, hit F5 multiple times and watch:
+                <br>
+                <span id="RAFLATE">at the bottom of the page how <span style="background:orangered;color:beige">&nbsp;rAF_riggered after setTimeout&nbsp;</span></span>
+                <span id="RAFEARLY"> rAF - requestAnimation ran early, thats great. Reload the page again with F5</span>
+            </p>
+            <p>setTimeout does the same as rAF, but always runs <b>before</b> the next attributeChangedCallback</p>
+        </section>
+        <!-- create Element A DOM *before* Element A is defined, thus DOM exists  when Element A is defined -->
+        <my-custom-element id="A" attr1="foo" style="display:inline-block;width:50%;text-align: left;">
+            <component-html component="A"> </component-html>
+        </my-custom-element>
+        <section class="DOMevent">
+
+            <!-- define both Custom Elements A and B -->
+            <script>
+                defineCustomElementsAandB(); // call JS function to define Custom Elements A and B
+            </script>
+            <br>
+            <tag-script>Here is the &lt;script&gt; <b>defining Custom Elements A and B</b></tag-script>
+        </section>
+
+        <!-- create Element B DOM *after* Element B is defined -->
+        <my-custom-element id="B" attr1="foo" style="display:block;width:50%;margin-left:50%">
+            <component-html component="B"></component-html>
+        </my-custom-element>
+
+        <explanations hidden>
+            <div id="Aconstructor">
+                The constructor (called <b>once</b> per instance) initializes the Web Component <b>in memory</b>.
+                <br>Since it's defined <b>after</b> DOM parsing, the component is already connected and DOM is
+                available.
+            </div>
+            <div id="AattributeChangedCallback__attr1">
+                Observed Attributes trigger attributeChangedCallback <b>before</b> connectedCallback.
+                <br>oldValue is NULL on the first call.
+            </div>
+            <div id="AattributeChangedCallback__attr2">
+                Simulating a user or process setting an attribute.
+                <br><b>attr2</b> triggers attributeChangedCallback for all Observed Attributes.
+                <br>Non-observed attributes do not trigger it.
+                <br>Note: oldValue = NULL on first call.
+            </div>
+            <div id="AconnectedCallback">
+                The connectedCallback fires on the <b>OPENING</b> tag!
+                <br>Since the DOM is parsed, Web Component <b>A</b>'s lightDOM is accessible.
+            </div>
+            <div id="APromise_resolved">
+                The Promise resolves early as Web Component <b>A</b> is already parsed with lightDOM available.
+                <br>However, note the Promise behavior for Web Component <b>B</b>.
+            </div>
+            <div id="Bconstructor">
+                No DOM was parsed yet because the &lt;script> is <b>BEFORE</b> Component <b>B</b> in the DOM.
+                <br>Even the ID value (or any other attributes) are <b>not</b> available.
+                <br>This is the same as calling <code>document.createElement("my-component")</code> in JavaScript.
+            </div>
+            <div id="BattributeChangedCallback__attr1">
+                Like the first Web Component the attributeChangedCallback fires for all
+                Observed Attributes. The Component is still**NOT** connected to the DOM!
+            </div>
+            <div id="BattributeChangedCallback2__attr2">
+                The a2 attribute, an Observed Attribute, triggers attributeChangedCallback for all Observed Attributes.
+                Note: oldValue = NULL, and the Web Component is not yet connected to the DOM.
+            </div>
+            <div id="BconnectedCallback">
+                The connectedCallback fires on the opening tag, connecting the Web Component to the DOM. However, its
+                innerHTML/lightDOM is not yet parsed. Many resolve this by defining Web Components late to ensure DOM
+                parsing.
+            </div>
+            <div id="BPromise_resolved">
+                Use a Promise to wait for Web Component lightDOM/innerHTML, but it may fail as innerHTML might not be
+                parsed yet.
+                <a
+                    href="https://github.com/sveltejs/svelte/blob/d207666ec3066a7fed208141c31e06fcf3275059/packages/svelte/src/internal/client/dom/elements/custom-element.js#L90">
+                    This Framework</a> may encounter issues with early 'tick' execution.
+            </div>
+            <div id="ArAF_triggered">
+                One way of waiting for that lightDOM/innerHTML to be parsed is with
+                requestAnimationFrame
+            </div>
+            <div id="BrAF_triggered">
+                Use requestAnimationFrame to wait for lightDOM/innerHTML parsing. Note: rAF may trigger late, even after
+                a later attributeChangedCallback. Rerun this page to observe variations.
+            </div>
+            <div id="AsetTimeout_triggered">Note how setTimeout always triggers <b>before</b> the next
+                attributeChangedCallback</div>
+            <div id="AattributeChangedCallback">TODO</div>
+            <div id="BsetTimeout_triggered">Again, setTimeout triggers <b>after</b></div>
+            <div id="BattributeChangedCallback">TODO</div>
+        </explanations>
+    </main>
+    <!-- <h3 class="DOMevent">LAST TAG IN HTML BODY</h3> -->
+    <section hidden>
+        <!-- used for testing while coding -->
+        <script>
+            customElements.define(
+                'test-lightdom-children',
+                class extends HTMLElement {
+                    connectedCallback() {
+                        setTimeout(() => {
+                            let childcount = this.children.length;
+                            console.log(childcount)
+                        })
+                    }
+                }
+            );
+        </script>
+        <test-lightdom-children>
+            <!-- 0 -->
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <!-- 1000 -->
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>10</b><b>11</b><b>12</b><b>13</b><b>14</b><b>15</b><b>16</b><b>17</b><b>18</b><b>19</b><b>20</b><b>21</b><b>22</b><b>23</b><b>24</b><b>25</b><b>26</b><b>27</b><b>28</b><b>29</b><b>30</b><b>31</b><b>32</b><b>33</b><b>34</b><b>35</b><b>36</b><b>37</b><b>38</b><b>39</b><b>40</b><b>41</b><b>42</b><b>43</b><b>44</b><b>45</b><b>46</b><b>47</b><b>48</b><b>49</b><b>50</b><b>51</b><b>52</b><b>53</b><b>54</b><b>55</b><b>56</b><b>57</b><b>58</b><b>59</b><b>60</b><b>61</b><b>62</b><b>63</b><b>64</b><b>65</b><b>66</b><b>67</b><b>68</b><b>69</b><b>70</b><b>71</b><b>72</b><b>73</b><b>74</b><b>75</b><b>76</b><b>77</b><b>78</b><b>79</b><b>80</b><b>81</b><b>82</b><b>83</b><b>84</b><b>85</b><b>86</b><b>87</b><b>88</b><b>89</b><b>90</b><b>91</b><b>92</b><b>93</b><b>94</b><b>95</b><b>96</b><b>97</b><b>98</b><b>99</b><b>100</b>
+            <!-- 2000 -->
+        </test-lightdom-children>
+    </section>
+
+</body>
+
+</html>
