@@ -77,6 +77,12 @@ customElements.define("tag-methodname", class extends TagLabelClass {
             } else {
                 this.colors = "gold";
             }
+            // ----------------------------------------------------------------
+            let localStorageKey = "runCounts";
+            let runCounts = JSON.parse(localStorage.getItem(localStorageKey)) || {};
+            runCounts.total = (runCounts.total || 0) + 1;
+            localStorage.setItem(localStorageKey, JSON.stringify(runCounts));
+
             setTimeout(() => {
                 if (this.colors == "gold") {
                     RAFLATE.style.display = "none";
@@ -84,6 +90,11 @@ customElements.define("tag-methodname", class extends TagLabelClass {
                 } else {
                     RAFLATE.style.display = "block";
                     RAFEARLY.style.display = "none";
+
+                    runCounts.rAFlate = (runCounts.rAFlate || 0) + 1;
+                    localStorage.setItem(localStorageKey, JSON.stringify(runCounts));
+                    let rAFlatePercentage = ((runCounts.rAFlate / runCounts.total) * 100).toFixed(1);
+                    RAFLATEPERCENT.innerHTML = rAFlatePercentage + "%"
                 }
             }, 100); // WTF? wsn't applied correctly
         }
