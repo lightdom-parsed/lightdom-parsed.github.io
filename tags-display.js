@@ -81,7 +81,7 @@ customElements.define("tag-methodname", class extends TagLabelClass {
             let localStorageKey = "runCounts";
             let runCounts = JSON.parse(localStorage.getItem(localStorageKey)) || {};
             runCounts.total = (runCounts.total || 0) + 1;
-            localStorage.setItem(localStorageKey, JSON.stringify(runCounts / 4)); // both Components run
+            localStorage.setItem(localStorageKey, JSON.stringify(runCounts)); // both Components run
 
             setTimeout(() => {
                 if (this.colors == "gold") {
@@ -93,7 +93,7 @@ customElements.define("tag-methodname", class extends TagLabelClass {
 
                     runCounts.rAFlate = (runCounts.rAFlate || 0) + 1;
                     localStorage.setItem(localStorageKey, JSON.stringify(runCounts));
-                    let rAFlatePercentage = ((runCounts.rAFlate / runCounts.total) * 100).toFixed(1);
+                    let rAFlatePercentage = ((runCounts.rAFlate / (runCounts.total / 4)) * 100).toFixed(1);
                     RAFLATEPERCENT.innerHTML = rAFlatePercentage + "%"
                 }
             }, 100); // WTF? wsn't applied correctly
