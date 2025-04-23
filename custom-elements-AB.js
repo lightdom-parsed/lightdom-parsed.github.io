@@ -92,20 +92,21 @@ function defineCustomElementsAandB() {
                 }
                 //this.render()
                 requestAnimationFrame(() => {
-                    let title = "rAF_triggered"
+                    this.rAF_triggered = true;
+                    let title = "rAF_triggered";
                     if (this.setTimeout_triggered) {
                         title = "rAF_triggered after setTimeout"
                     }
-                    this.log(title)
-                    this.addHTML("rAF");
+                    this.log(title);
+                    // this.addHTML("rAF");
                 })
                 setTimeout(() => {
                     this.setTimeout_triggered = true;
-                    this.log("setTimeout_triggered")
-                    this.addHTML("setTimeout");
+                    this.log("setTimeout_triggered");
+                    // this.addHTML("setTimeout");
                 })
                 setTimeout(() => {
-                    this.setAttribute("attr2", "BAR")
+                    // this.setAttribute("attr2", "BAR");
                 })
                 await Promise.resolve()
                 this.log("Promise_resolved")
