@@ -1,9 +1,9 @@
 /* 
     DISCLAIMER this a a sneak preview of one lesson from the Web Components course I am working on
-    I cut some corners to get it only after a BlueSky conversation
+    I cut some corners to get it online after a BlueSky conversation
 
     Haven't had time yet to add Andrea his code
-    
+
 */
 
 
