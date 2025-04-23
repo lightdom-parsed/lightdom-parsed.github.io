@@ -81,7 +81,7 @@ customElements.define("tag-methodname", class extends TagLabelClass {
             let localStorageKey = "runCounts";
             let runCounts = JSON.parse(localStorage.getItem(localStorageKey)) || {};
             runCounts.total = (runCounts.total || 0) + 1;
-            localStorage.setItem(localStorageKey, JSON.stringify(runCounts));
+            localStorage.setItem(localStorageKey, JSON.stringify(runCounts / 4)); // both Components run
 
             setTimeout(() => {
                 if (this.colors == "gold") {
