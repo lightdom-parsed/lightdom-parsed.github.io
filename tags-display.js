@@ -72,11 +72,7 @@ customElements.define("tag-methodname", class extends TagLabelClass {
         if (isDefault) {
             this.colors = "green,beige";
         } else if (isTrigger) {
-            if (isAfter) {
-                this.colors = "orangered,beige";
-            } else {
-                this.colors = "gold";
-            }
+            this.colors = isAfter ? "orangered,beige" : "gold";
             // ----------------------------------------------------------------
             let localStorageKey = "runCounts";
             let runCounts = JSON.parse(localStorage.getItem(localStorageKey)) || {};
@@ -93,8 +89,9 @@ customElements.define("tag-methodname", class extends TagLabelClass {
 
                     runCounts.rAFlate = (runCounts.rAFlate || 0) + 1;
                     localStorage.setItem(localStorageKey, JSON.stringify(runCounts));
+                    // 4 methods ran for one component call:
                     let rAFlatePercentage = ((runCounts.rAFlate / (runCounts.total / 4)) * 100).toFixed(1);
-                    RAFLATEPERCENT.innerHTML = rAFlatePercentage + "%"
+                    RAFLATEPERCENT.innerHTML = `<b>${rAFlatePercentage + "%"}</b> of page loads`;
                 }
             }, 100); // WTF? wsn't applied correctly
         }
